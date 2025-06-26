@@ -1,0 +1,214 @@
+{% extends 'myapp/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Left Column: Task List and Filters -->
+    <div class="main-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2 class="fade-in">Hello, {{ request.user.username }}! Welcome Back</h2>
+            <p><strong>Your Role:</strong> {{ request.user.userprofile.role|title }}</p>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <div class="dashboard-cards">
+            <div class="card">
+                <i class="fas fa-users"></i>
+                <h3>Users Online</h3>
+                <p>{{ users_online }}</p>
+            </div>
+            <div class="card">
+                <i class="fas fa-tasks"></i>
+                <h3>Tasks Completed</h3>
+                <p>{{ tasks_completed }} / {{ user_tasks.count }}</p>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="notification">
+            <button onclick="showPopup()"><i class="fas fa-bell"></i> Show Notifications</button>
+            <div id="popup" class="popup hidden">
+                <h3>Recent Activity</h3>
+                <p>No new notifications.</p>
+                <button onclick="hidePopup()">Close</button>
+            </div>
+        </div>
+
+        <!-- Task Filters and Search -->
+        <div class="task-controls">
+            <form method="GET" action="{% url 'dashboard' %}" class="search-form">
+                <input type="text" name="task_query" placeholder="Search tasks..." value="{{ task_query|default:'' }}">
+                <button type="submit"><i class="fas fa-search"></i> Search</button>
+            </form>
+            <div class="task-filters">
+                <a href="{% url 'dashboard' %}?status=all" class="filter-btn {% if status == 'all' or not status %}active{% endif %}">All</a>
+                <a href="{% url 'dashboard' %}?status=pending" class="filter-btn {% if status == 'pending' %}active{% endif %}">Pending</a>
+                <a href="{% url 'dashboard' %}?status=completed" class="filter-btn {% if status == 'completed' %}active{% endif %}">Completed</a>
+            </div>
+        </div>
+
+        <!-- Task List -->
+        <section class="task-list">
+            <h3>{% if request.user.userprofile.role == "admin" %}All Tasks{% else %}Your Tasks{% endif %}</h3>
+            {% if user_tasks %}
+                <div class="task-grid">
+                    {% for task in user_tasks %}
+                        <div class="task-card {% if task.is_completed %}completed{% endif %}">
+                            <div class="task-card-header">
+                                <h4>{{ task.title }}</h4>
+                                <span class="task-status">
+                                    {% if task.is_completed %}
+                                        <i class="fas fa-check-circle"></i> Completed
+                                    {% else %}
+                                        <i class="fas fa-clock"></i> Pending
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <p>{{ task.description|truncatewords:20 }}</p>
+                            <small>Created: {{ task.created_at|date:"M d, Y H:i" }}</small>
+                            {% if task.due_date %}
+                                <small><br>Due: {{ task.due_date|date:"M d, Y H:i" }}</small>
+                            {% endif %}
+                            <div class="task-actions">
+                                {% if not task.is_completed %}
+                                    <a href="{% url 'complete_task' task.id %}" class="btn small success-btn"><i class="fas fa-check"></i> Mark Done</a>
+                                    <a href="{% url 'edit_task' task.id %}" class="btn small"><i class="fas fa-edit"></i> Edit</a>
+                                {% endif %}
+                                <form method="POST" action="{% url 'delete_task' task.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn small delete-btn" onclick="return confirm('Delete this task?')"><i class="fas fa-trash"></i> Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-tasks">No tasks found. Add a task to get started! 🧠</p>
+            {% endif %}
+        </section>
+
+        <!-- Registered Users Table (Admin Only) -->
+        {% if request.user.userprofile.role == "admin" %}
+        <section class="user-list">
+            <h3>{% if user_query %}Search Results for "{{ user_query }}"{% else %}User Profiles{% endif %}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Last Seen</th>
+                        <th>Task Count</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.user.id }}</td>
+                            <td>{{ user.user.username }}</td>
+                            <td>
+                                {{ user.user.username }}
+                                {% if user.role == "admin" %}
+                                    <span class="badge admin-badge" title="Admin">👑</span>
+                                {% else %}
+                                    <span class="badge user-badge" title="User">🙋</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.user.email }}</td>
+                            <td>{{ user.last_login|date:"M d, Y"|default:"Never" }}</td>
+                            <td>{{ user.user.task_set.count }}</td>
+                            <td>
+                                <a href="{% url 'edit_profile' user.user.id %}" class="btn small"><i class="fas fa-edit"></i> Edit</a>
+                                <a href="{% url 'delete_user' user.user.id %}" class="btn small delete-btn"><i class="fas fa-trash"></i> Delete</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7">No users found for "{{ user_query }}".</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Sidebar with Task Form, Stats, and Activity -->
+    <aside class="sidebar">
+        <section class="task-form card">
+            <h3>Add New Task</h3>
+            <form method="POST" class="styled-form">
+                {% csrf_token %}
+                {% for field in task_form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="alert alert-error">
+                                {% for error in field.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" name="add_task" class="btn"><i class="fas fa-plus"></i> Add Task</button>
+            </form>
+        </section>
+
+        <section class="task-stats card">
+            <h3>Task Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i class="fas fa-tasks"></i>
+                    <p>Total Tasks: {{ user_tasks.count }}</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Completed: {{ tasks_completed }}</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-clock"></i>
+                    <p>Pending: {{ tasks_pending }}</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="recent-activity card">
+            <h3>Recent Activity</h3>
+            {% if recent_activities %}
+                <ul class="activity-list">
+                    {% for activity in recent_activities %}
+                        <li class="activity-item">
+                            <span class="activity-icon">
+                                {% if activity.action == 'created' %}
+                                    <i class="fas fa-plus-circle"></i>
+                                {% elif activity.action == 'completed' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif activity.action == 'deleted' %}
+                                    <i class="fas fa-trash"></i>
+                                {% endif %}
+                            </span>
+                            <span>{{ activity.message }}</span>
+                            <small>{{ activity.timestamp|date:"M d, Y H:i" }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="no-activity">No recent activity.</p>
+            {% endif %}
+        </section>
+
+        <section class="quick-links card">
+            <h3>Quick Links</h3>
+            <ul class="link-list">
+                <li><a href="{% url 'edit_profile' request.user.id %}" class="btn small"><i class="fas fa-user-edit"></i> Edit Profile</a></li>
+                <li><a href="{% url 'logout' %}" class="btn small logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </section>
+    </aside>
+</div>
+{% endblock %}

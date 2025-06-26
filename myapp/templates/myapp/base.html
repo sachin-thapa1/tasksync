@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}TaskSync{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'myapp/styles.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body data-theme="light">
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <h1>TaskSync</h1>
+    <div class="nav-right">
+      {% if user.is_authenticated %}
+        {% if request.resolver_match and request.resolver_match.url_name not in 'login,register' %}
+          <form method="GET" action="{% url 'dashboard' %}" class="search-form">
+            <input type="text" name="user_query" placeholder="Search users..." value="{{ user_query|default:'' }}">
+            <button type="submit"><i class="fas fa-search"></i></button>
+          </form>
+        {% endif %}
+        <span class="user-greeting">Hello, {{ user.username }}</span>
+        <a class="btn logout-btn" href="{% url 'logout' %}">Logout</a>
+      {% else %}
+        <a class="btn" href="{% url 'login' %}">Login</a>
+        <a class="btn" href="{% url 'register' %}">Sign Up</a>
+      {% endif %}
+      <!-- Dark Mode Toggle -->
+      <label class="theme-toggle">
+        <input type="checkbox" id="darkToggle">
+        <span class="toggle-label"><i class="fas fa-moon"></i><i class="fas fa-sun"></i></span>
+      </label>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Scripts -->
+  <script src="{% static 'myapp/scripts.js' %}"></script>
+</body>
+</html>
