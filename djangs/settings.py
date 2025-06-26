@@ -21,9 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$h#yfq-89hj9#)zd*qfg08dpwu@w+r&6og+m!%*m07je%vv6to')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True  # Set to False after debugging
 
-ALLOWED_HOSTS = ['tasksync-app.herokuapp.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['tasksync-bd6n.onrender.com', '127.0.0.1', 'localhost']
+
+# CSRF trusted origins for form submissions
+CSRF_TRUSTED_ORIGINS = ['https://tasksync-bd6n.onrender.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -95,7 +98,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kathmandu'  # Set to Nepal time (UTC+5:45)
 USE_I18N = True
 USE_TZ = True
 
