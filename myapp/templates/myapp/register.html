@@ -5,6 +5,8 @@
 {% block content %}
 <div class="login-container">
     <h2>Register a New User</h2>
+
+    <!-- Display Django messages (e.g., success, error) -->
     {% if messages %}
         <div class="messages">
             {% for message in messages %}
@@ -12,14 +14,27 @@
             {% endfor %}
         </div>
     {% endif %}
+
+    <!-- Registration form -->
     <form method="POST" class="styled-form">
         {% csrf_token %}
+
+        <!-- Display form-wide errors (non_field_errors) -->
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Render each field -->
         {% for field in form %}
             <div class="form-group">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.errors %}
-                    <div class="alert alert-error">
+                    <div class="alert alert-danger">
                         {% for error in field.errors %}
                             {{ error }}
                         {% endfor %}
@@ -27,8 +42,12 @@
                 {% endif %}
             </div>
         {% endfor %}
-        <button type="submit" class="btn"><i class="fas fa-user-plus"></i> Register</button>
-        <p>Already have an account? <a href="{% url 'login' %}">Login here</a>.</p>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Register
+        </button>
+
+        <p class="mt-3">Already have an account? <a href="{% url 'login' %}">Login here</a>.</p>
     </form>
 </div>
 {% endblock %}
