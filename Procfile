@@ -1,1 +1,1 @@
-web: gunicorn djangs.wsgi
+web: gunicorn tasksync.wsgi
