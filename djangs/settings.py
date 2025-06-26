@@ -23,7 +23,14 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-$h#yfq-89hj9#)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True  # Set to False after debugging
 
-ALLOWED_HOSTS = ['tasksync-bd6n.onrender.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [
+    'tasksync-n1na.onrender.com',
+    'tasksync-bd6n.onrender.com',
+    '127.0.0.1',
+    'localhost',
+]
+
+
 
 # CSRF trusted origins for form submissions
 CSRF_TRUSTED_ORIGINS = ['https://tasksync-bd6n.onrender.com']
