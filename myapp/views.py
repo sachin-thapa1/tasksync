@@ -11,7 +11,7 @@ from django.db.models import Q
 from .models import UserProfile, Task
 from .forms import UserProfileForm, RegisterForm, TaskForm
 
-# ✅ User Login View
+# User Login View
 def user_login(request):
     if request.method == "POST":
         username = request.POST.get('username')
@@ -19,10 +19,18 @@ def user_login(request):
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            profile, _ = UserProfile.objects.get_or_create(
+            # Create or update UserProfile
+            profile, created = UserProfile.objects.get_or_create(
                 user=user,
-                defaults={'name': user.username, 'email': user.email, 'role': 'user'}
+                defaults={
+                    'name': user.username,
+                    'email': user.email,
+                    'role': 'admin' if user.is_superuser else 'user'
+                }
             )
+            if not created and user.is_superuser:
+                profile.role = 'admin'  # Ensure superusers have admin role
+                profile.save()
             profile.last_login = now()
             profile.save()
             messages.success(request, "✅ Logged in successfully!")
@@ -31,28 +39,27 @@ def user_login(request):
             messages.error(request, "❌ Invalid username or password.")
     return render(request, "myapp/login.html")
 
-# ✅ User Logout View
+# User Logout View
 def user_logout(request):
     logout(request)
     messages.success(request, "✅ Logged out successfully!")
     return redirect('login')
 
-# ✅ Dashboard View
+# Dashboard View
 @login_required
 def dashboard(request):
-    user_query = request.GET.get('user_query', '')
-    task_query = request.GET.get('task_query', '')
-    status = request.GET.get('status', 'all')
-
-    # Get or redirect if no profile
     try:
         user_profile = request.user.userprofile
     except UserProfile.DoesNotExist:
         messages.error(request, "User profile not found.")
         return redirect('login')
 
-    # Filter users if admin
-    if user_profile.role == "admin":
+    user_query = request.GET.get('user_query', '')
+    task_query = request.GET.get('task_query', '')
+    status = request.GET.get('status', 'all')
+
+    # Admin or superuser sees all users and tasks
+    if user_profile.role == "admin" or request.user.is_superuser:
         users = UserProfile.objects.filter(name__icontains=user_query) if user_query else UserProfile.objects.all()
         user_tasks = Task.objects.all()
     else:
@@ -93,7 +100,7 @@ def dashboard(request):
     online_user_ids = [s.get_decoded().get('_auth_user_id') for s in active_sessions]
     users_online = User.objects.filter(id__in=online_user_ids).count()
 
-    # Simulated recent activity
+    # Recent activity
     recent_activities = [{
         'action': 'completed' if task.is_completed else 'created',
         'message': f"Task '{task.title}' {'completed' if task.is_completed else 'created'} by {task.user.username}",
@@ -113,7 +120,7 @@ def dashboard(request):
         "recent_activities": recent_activities,
     })
 
-# ✅ Complete Task
+# Complete Task
 @login_required
 def complete_task(request, task_id):
     try:
@@ -122,30 +129,44 @@ def complete_task(request, task_id):
         messages.error(request, "User profile not found.")
         return redirect('login')
 
-    task = get_object_or_404(
-        Task,
-        id=task_id,
-        user=request.user if user_profile.role != "admin" else None
-    )
+    # Allow admins to complete any task, others only their own
+    task_filter = {} if (user_profile.role == "admin" or request.user.is_superuser) else {'user': request.user}
+    task = get_object_or_404(Task, id=task_id, **task_filter)
 
     task.is_completed = True
     task.save()
     messages.success(request, "🎉 Task marked as completed!")
     return redirect('dashboard')
 
-# ✅ Delete Task
+# Delete Task
 @login_required
 @require_POST
 def delete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id, user=request.user)
+    try:
+        user_profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found.")
+        return redirect('login')
+
+    # Allow admins to delete any task, others only their own
+    task_filter = {} if (user_profile.role == "admin" or request.user.is_superuser) else {'user': request.user}
+    task = get_object_or_404(Task, id=task_id, **task_filter)
     task.delete()
     messages.success(request, "🗑️ Task deleted successfully!")
     return redirect('dashboard')
 
-# ✅ Edit Task
+# Edit Task
 @login_required
 def edit_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id, user=request.user)
+    try:
+        user_profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found.")
+        return redirect('login')
+
+    # Allow admins to edit any task, others only their own
+    task_filter = {} if (user_profile.role == "admin" or request.user.is_superuser) else {'user': request.user}
+    task = get_object_or_404(Task, id=task_id, **task_filter)
     form = TaskForm(request.POST or None, instance=task)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -153,12 +174,11 @@ def edit_task(request, task_id):
         return redirect('dashboard')
     return render(request, "myapp/edit_task.html", {"form": form, "task": task})
 
-# ✅ Register User
+# Register User
 def register_user(request):
     form = RegisterForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
-        # ✅ Prevent duplicate UserProfile
         if not UserProfile.objects.filter(user=user).exists():
             UserProfile.objects.create(
                 user=user,
@@ -171,17 +191,18 @@ def register_user(request):
         return redirect("dashboard")
     return render(request, "myapp/register.html", {"form": form})
 
-
-# ✅ Admin: Edit User Profile
+# Admin: Edit User Profile
 @login_required
 def edit_profile(request, user_id):
     try:
-        if request.user.userprofile.role != "admin":
-            messages.error(request, "❌ Unauthorized access.")
-            return redirect("dashboard")
+        user_profile = request.user.userprofile
     except UserProfile.DoesNotExist:
         messages.error(request, "User profile not found.")
         return redirect('login')
+
+    if not (user_profile.role == "admin" or request.user.is_superuser):
+        messages.error(request, "❌ Unauthorized access.")
+        return redirect("dashboard")
 
     profile = get_object_or_404(UserProfile, user__id=user_id)
     form = UserProfileForm(request.POST or None, instance=profile)
@@ -191,24 +212,22 @@ def edit_profile(request, user_id):
         return redirect("dashboard")
     return render(request, "myapp/edit_profile.html", {"form": form, "user": profile})
 
-# ✅ Admin: Delete User
+# Admin: Delete User
 @login_required
 def delete_user(request, user_id):
     try:
-        if request.user.userprofile.role != "admin":
-            messages.error(request, "❌ Unauthorized access.")
-            return redirect("dashboard")
+        user_profile = request.user.userprofile
     except UserProfile.DoesNotExist:
         messages.error(request, "User profile not found.")
         return redirect('login')
 
-    profile = get_object_or_404(UserProfile, user__id=user_id)
+    if not (user_profile.role == "admin" or request.user.is_superuser):
+        messages.error(request, "❌ Unauthorized access.")
+        return redirect("dashboard")
 
+    profile = get_object_or_404(UserProfile, user__id=user_id)
     if request.method == "POST":
         profile.user.delete()
         messages.success(request, f"❌ {profile.name}'s account deleted.")
         return redirect("dashboard")
-
-    # This renders your confirmation template
     return render(request, "myapp/confirm_delete_user.html", {"user": profile})
-
