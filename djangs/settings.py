@@ -112,12 +112,12 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'myapp' / 'static']  # Fixed to avoid duplicates
+STATICFILES_DIRS = [BASE_DIR / 'myapp/static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    # 'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
 # Media files
