@@ -17,7 +17,7 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # Change to False after debugging
+DEBUG = False  # Production-ready
 
 ALLOWED_HOSTS = [
     'tasksync-n1na.onrender.com',
@@ -57,7 +57,7 @@ ROOT_URLCONF = 'djangs.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'myapp' / 'templates'],  # Ensure myapp/templates is included
+        'DIRS': [BASE_DIR / 'myapp' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -83,7 +83,7 @@ DATABASES = {
 
 # Session settings for persistence
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_SECURE = True  # Secure cookies for HTTPS
+SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_AGE = 1209600  # 2 weeks
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -112,9 +112,13 @@ USE_TZ = True
 
 # Static files
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'myapp' / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'myapp' / 'static']  # Fixed to avoid duplicates
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
 
 # Media files
 MEDIA_URL = '/media/'
