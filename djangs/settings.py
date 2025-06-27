@@ -17,17 +17,17 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True  # Change to False before deploying production
+DEBUG = True  # Change to False after debugging
 
 ALLOWED_HOSTS = [
+    'tasksync-n1na.onrender.com',
     '127.0.0.1',
     'localhost',
-    'tasksync-n1na.onrender.com',
 ]
 
 # CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = [
-    'https://tasksync-n1na.onrender.com'
+    'https://tasksync-n1na.onrender.com',
 ]
 
 # Application definition
@@ -57,7 +57,7 @@ ROOT_URLCONF = 'djangs.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Add your templates dir here
+        'DIRS': [BASE_DIR / 'myapp' / 'templates'],  # Ensure myapp/templates is included
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,12 +73,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'djangs.wsgi.application'
 
 # Database
+# Explicit SQLite for Render free tier
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Session settings for persistence
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_SECURE = True  # Secure cookies for HTTPS
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
