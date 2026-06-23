@@ -1,67 +1,129 @@
-# 📋 TaskSync Manager
+# TaskSync
 
-**Backend Developer | Django | Task Management Project**
+A full-stack multi-user task management platform with real-time admin monitoring — built with Django and deployed on Render.
 
-A **Task Management System** built with **Django** and **PostgreSQL**. TaskSync Manager allows users to manage their daily tasks, track progress, and maintain user profiles with role-based access control.
+Live: https://tasksync-n1na.onrender.com
 
----
-
-## 🛠️ Tech Stack
-
-**Backend:**  
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)  
-![Django](https://img.shields.io/badge/Django-092E20?style=flat-square&logo=django&logoColor=white)
-
-**Database:**  
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)
-
-**Tools:**  
-![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white)  
-![Postman](https://img.shields.io/badge/Postman-FF6C37?style=flat-square&logo=postman&logoColor=white)  
+> Hosted on Render free tier — may take 30–60 seconds to wake on first request.
 
 ---
 
-## 🚀 Features
+## What It Is
 
-- ✅ **User Authentication & Authorization**  
-  - Login, Logout, and Registration functionality  
-- ✅ **Task Management**  
-  - Create, edit, delete, and mark tasks as complete  
-- ✅ **User Profiles**  
-  - Users can edit their profile information  
-- ✅ **Admin Controls**  
-  - Admins can delete any user  
-- ✅ **Dashboard**  
-  - Shows all tasks assigned to the logged-in user  
-- ✅ **RESTful & Secure**  
-  - Proper HTTP methods for actions, with role-based restrictions  
+TaskSync is more than a to-do app. It's a multi-user platform where regular users manage their own tasks, and admins get a live oversight layer — seeing who's online, tracking task completion across all users, and managing the entire user base from a single dashboard.
 
 ---
 
-## 🔗 API Endpoints
+## Tech Stack
 
-**Authentication & Users**  
-- `GET/POST /login/` → User login  
-- `GET /logout/` → Logout user  
-- `GET/POST /register/` → User registration  
-- `GET/POST /profile/<user_id>/edit/` → Edit user profile  
-- `POST /user/<user_id>/delete/` → Delete a user (Admin only)  
-
-**Tasks**  
-- `GET /dashboard/` → User dashboard showing tasks  
-- `POST /task/<task_id>/complete/` → Mark task as complete  
-- `POST /task/<task_id>/delete/` → Delete a task  
-- `GET/POST /task/<task_id>/edit/` → Edit a task  
-
-> Note: All endpoints require proper authentication for access.
+| Layer | Technology |
+|---|---|
+| Language | Python |
+| Framework | Django |
+| Database | SQLite |
+| Frontend | HTML · CSS · JavaScript |
+| Deployment | Render |
 
 ---
 
-## ⚡ Installation
+## Features
 
-1. Clone the repo:
+### All Users
+- Register, login, logout with session-based authentication
+- Personal dashboard showing own tasks only
+- Create tasks with title, description, and due date
+- Edit and delete own tasks
+- Mark tasks as complete
+- Filter tasks — All / Pending / Completed
+- Search tasks by keyword
+- Real-time task statistics — Total, Completed, Pending
+- Recent activity feed — timestamped task completions
+- Edit own profile — name, email, avatar upload
+- Dark mode toggle
 
+### Admin Only
+- View all users — ID, username, role, email, last seen, task count
+- Real-time Users Online counter — live session tracking
+- Platform-wide Tasks Completed ratio
+- View and delete any user's tasks
+- Edit or delete any user account
+- Full activity feed across all users
+
+---
+
+## Role Overview
+
+| Role | Permissions |
+|---|---|
+| `User` | Manage own tasks, edit own profile, view own stats |
+| `Admin` | Everything above + full user management, platform-wide monitoring |
+
+---
+
+## Pages & Routes
+
+| Route | Access | Description |
+|---|---|---|
+| `/login/` | Public | Login page with dark mode toggle |
+| `/register/` | Public | User registration |
+| `/dashboard/` | Authenticated | Main task dashboard |
+| `/task/{id}/edit/` | Owner / Admin | Edit a task |
+| `/task/{id}/complete/` | Owner / Admin | Mark task complete |
+| `/task/{id}/delete/` | Owner / Admin | Delete a task |
+| `/profile/{id}/edit/` | Self / Admin | Edit user profile |
+| `/user/{id}/delete/` | Admin only | Delete a user |
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Python 3.10+
+
+### Setup
+
+**1. Clone the repo**
 ```bash
 git clone https://github.com/sachin-thapa1/tasksync-manager.git
-Live api : tasksync-n1na.onrender.com
 cd tasksync-manager
+```
+
+**2. Create virtual environment**
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+```
+
+**3. Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+**4. Run migrations**
+```bash
+python manage.py migrate
+```
+
+**5. Create an admin user**
+```bash
+python manage.py createsuperuser
+```
+
+**6. Start the server**
+```bash
+python manage.py runserver
+```
+
+App available at `http://localhost:8000`.
+
+---
+
+## Status
+
+Active development. Core task management, admin monitoring, session tracking, and user management are fully built and live. Notification system and additional features planned.
+
+---
+
+## License
+
+MIT
